@@ -14,6 +14,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const POSTS = path.join(ROOT, 'posts');
 const META_PATH = path.join(ROOT, 'data', 'meta.json');
 const AVATAR_DIR = path.join(ROOT, 'data', 'avatars');
 const ORIGIN = 'https://ethresear.ch';
@@ -24,8 +25,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function slugs() {
   return fs
-    .readdirSync(ROOT)
-    .filter((f) => f.endsWith('.md') && f !== 'PARSE.md' && f !== 'README.md')
+    .readdirSync(POSTS)
+    .filter((f) => f.endsWith('.md'))
     .map((f) => f.replace(/\.md$/, ''))
     .sort();
 }

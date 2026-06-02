@@ -14,6 +14,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const POSTS = path.join(ROOT, 'posts');
 const IMAGES = path.join(ROOT, 'images');
 const META_PATH = path.join(ROOT, 'data', 'meta.json');
 const AVATAR_DIR = path.join(ROOT, 'data', 'avatars');
@@ -24,7 +25,7 @@ const UA = { 'user-agent': 'ethresearch-reader/1.0 (static archive builder)' };
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-for (const d of [IMAGES, AVATAR_DIR, path.dirname(META_PATH)]) fs.mkdirSync(d, { recursive: true });
+for (const d of [POSTS, IMAGES, AVATAR_DIR, path.dirname(META_PATH)]) fs.mkdirSync(d, { recursive: true });
 
 async function getJSON(url) {
   const r = await fetch(url, { headers: UA });
@@ -178,7 +179,7 @@ async function main() {
   let savedMd = 0, savedMeta = 0, skipped = 0, failed = 0, done = 0;
   for (const t of work) {
     done++;
-    const mdPath = path.join(ROOT, `${t.slug}.md`);
+    const mdPath = path.join(POSTS, `${t.slug}.md`);
     const tag = `[${done}/${work.length}] ${t.slug}`;
     try {
       if (!fs.existsSync(mdPath)) {
@@ -209,7 +210,7 @@ async function main() {
   }
   fs.writeFileSync(META_PATH, JSON.stringify(meta, null, 2));
   console.log(`\nDone. new md: ${savedMd}, new meta: ${savedMeta}, skipped existing: ${skipped}, failed: ${failed}.`);
-  console.log(`Total posts in archive: ${fs.readdirSync(ROOT).filter((f) => f.endsWith('.md') && !['PARSE.md', 'README.md'].includes(f)).length}`);
+  console.log(`Total posts in archive: ${fs.readdirSync(POSTS).filter((f) => f.endsWith('.md')).length}`);
 }
 
 main().catch((e) => { console.error('FATAL', e); process.exit(1); });

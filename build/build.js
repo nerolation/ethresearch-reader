@@ -8,6 +8,7 @@ import { renderPost } from './render.js';
 import { layout, postMain, indexMain, formatDate, escapeHtml } from './templates.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const POSTS = path.join(ROOT, 'posts');
 const SITE = path.join(ROOT, 'site');
 const ASSETS = path.join(SITE, 'assets');
 const SRC_ASSETS = path.join(ROOT, 'build', 'assets');
@@ -19,8 +20,8 @@ const normalizeTitle = (s) => String(s || '').replace(/''/g, '"').replace(/``/g,
 
 function listSlugs() {
   return fs
-    .readdirSync(ROOT)
-    .filter((f) => f.endsWith('.md') && !['PARSE.md', 'README.md'].includes(f))
+    .readdirSync(POSTS)
+    .filter((f) => f.endsWith('.md'))
     .map((f) => f.replace(/\.md$/, ''))
     .sort();
 }
@@ -61,7 +62,7 @@ function buildPosts() {
   const slugs = listSlugs();
   const knownSlugs = new Set(slugs);
   const posts = slugs.map((slug) => {
-    const raw = fs.readFileSync(path.join(ROOT, `${slug}.md`), 'utf8');
+    const raw = fs.readFileSync(path.join(POSTS, `${slug}.md`), 'utf8');
     const r = renderPost(raw, { knownSlugs });
     const m = meta[slug] || {};
     const a = m.author || {};

@@ -15,7 +15,8 @@ all curation, discussion and likes still happen there.
 ## Layout
 
 ```
-.                      ← content source (one {slug}.md per post + images/)
+.
+├── posts/             ← content source: one {slug}.md per post
 ├── images/            ← post images (referenced as images/{hash}.ext)
 ├── data/
 │   ├── meta.json      ← per-post metadata (author, date, likes, tags, canonical id)
@@ -60,7 +61,7 @@ topic each of them **created** (via `/topics/created-by/{user}.json`) and its fi
 
 - `npm run scrape` again picks up any new topics by those authors (incremental).
 - To refresh metadata (likes, tags) for posts already downloaded: `npm run fetch`.
-- To add an arbitrary post by hand, follow `PARSE.md` and drop a `{slug}.md` at the root.
+- To add an arbitrary post by hand, follow `PARSE.md` and drop a `{slug}.md` into `posts/`.
 
 ## Customising
 
