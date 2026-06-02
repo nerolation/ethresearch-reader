@@ -20,20 +20,62 @@ const META_PATH = path.join(ROOT, 'data', 'meta.json');
 const AVATAR_DIR = path.join(ROOT, 'data', 'avatars');
 const ORIGIN = 'https://ethresear.ch';
 const TOP_N = Number(process.env.TOP_N || 10);
-const PAUSE_MS = 400;
-const UA = { 'user-agent': 'ethresearch-reader/1.0 (static archive builder)' };
+const RANK_FROM = Number(process.env.RANK_FROM || 1); // 1-indexed, inclusive
+const RANK_TO = Number(process.env.RANK_TO || TOP_N); // inclusive
+const PAUSE_MS = Number(process.env.PAUSE_MS || 400);
+
+// Authenticated access via the ethresear.ch API key (sanctioned, instead of
+// anonymous scraping). The key is a SECRET: read it from the env or an external
+// file OUTSIDE the repo — it is never hardcoded or committed.
+function loadApiKey() {
+  if (process.env.ETHRESEARCH_API_KEY) return process.env.ETHRESEARCH_API_KEY.trim();
+  const f = process.env.ETHRESEARCH_API_KEY_FILE || path.join(ROOT, '..', 'ethresearch_read_key.txt');
+  try {
+    return fs.readFileSync(f, 'utf8').trim();
+  } catch {
+    return '';
+  }
+}
+const API_KEY = loadApiKey();
+const API_USER = process.env.ETHRESEARCH_API_USER || 'Nero_eth';
+const HEADERS = {
+  'user-agent': 'ethresearch-reader/1.0 (static archive builder)',
+  ...(API_KEY ? { 'Api-Key': API_KEY, 'Api-Username': API_USER } : {}),
+};
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 for (const d of [POSTS, IMAGES, AVATAR_DIR, path.dirname(META_PATH)]) fs.mkdirSync(d, { recursive: true });
 
+// Fetch with backoff on 429 (rate limit) and transient 5xx. Honours Retry-After
+// / Discourse's extras.wait_seconds when present, else exponential backoff.
+async function fetchWithRetry(url, opts = {}, tries = 6) {
+  for (let attempt = 0; ; attempt++) {
+    const r = await fetch(url, { headers: HEADERS, ...opts });
+    if (r.status !== 429 && r.status < 500) return r;
+    if (attempt >= tries) return r;
+    let wait = Number(r.headers.get('retry-after')) * 1000;
+    if (!wait || Number.isNaN(wait)) {
+      try {
+        const j = await r.clone().json();
+        wait = (j.extras && j.extras.wait_seconds ? j.extras.wait_seconds : 0) * 1000;
+      } catch {
+        /* no body */
+      }
+    }
+    if (!wait) wait = Math.min(60000, 4000 * 2 ** attempt); // 4s,8s,16s,32s,60s…
+    process.stdout.write(`[${r.status} backoff ${Math.round(wait / 1000)}s] `);
+    await sleep(wait);
+  }
+}
+
 async function getJSON(url) {
-  const r = await fetch(url, { headers: UA });
+  const r = await fetchWithRetry(url);
   if (!r.ok) throw new Error(`${r.status} ${url}`);
   return r.json();
 }
 async function getText(url) {
-  const r = await fetch(url, { headers: UA });
+  const r = await fetchWithRetry(url);
   if (!r.ok) throw new Error(`${r.status} ${url}`);
   return r.text();
 }
@@ -49,7 +91,7 @@ function validImage(buf) {
 async function download(url, dest) {
   if (fs.existsSync(dest) && fs.statSync(dest).size > 100) return true;
   try {
-    const r = await fetch(url, { headers: UA, redirect: 'follow' });
+    const r = await fetchWithRetry(url, { redirect: 'follow' });
     if (!r.ok) return false;
     const buf = Buffer.from(await r.arrayBuffer());
     if (!validImage(buf)) return false;
@@ -156,14 +198,22 @@ async function main() {
     try { return JSON.parse(fs.readFileSync(META_PATH, 'utf8')); } catch { return {}; }
   })();
 
-  console.log(`Fetching top ${TOP_N} users by all-time likes…`);
-  const dir = await getJSON(`${ORIGIN}/directory_items.json?period=all&order=likes_received&page=0`);
-  const users = (dir.directory_items || []).slice(0, TOP_N).map((it) => ({
+  console.log(API_KEY ? `Authenticated API access (Api-Username: ${API_USER}).` : 'WARNING: no API key found — anonymous requests.');
+  console.log(`Fetching ranking slice ${RANK_FROM}..${RANK_TO} by all-time likes…`);
+  let items = [];
+  for (let page = 0; page <= 10; page++) {
+    const d = await getJSON(`${ORIGIN}/directory_items.json?period=all&order=likes_received&page=${page}`);
+    const batch = d.directory_items || [];
+    items = items.concat(batch);
+    if (items.length >= RANK_TO || batch.length === 0) break;
+    await sleep(PAUSE_MS);
+  }
+  const users = items.slice(RANK_FROM - 1, RANK_TO).map((it) => ({
     username: it.user.username,
     name: it.user.name,
     likes: it.likes_received,
   }));
-  users.forEach((u, i) => console.log(`  ${i + 1}. @${u.username} (${u.name || ''}) — ${u.likes} likes`));
+  users.forEach((u, i) => console.log(`  #${RANK_FROM + i} @${u.username} (${u.name || ''}) — ${u.likes} likes`));
 
   // Build the global topic worklist (dedup by id).
   const byId = new Map();

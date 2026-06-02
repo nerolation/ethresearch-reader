@@ -1,0 +1,1 @@
+Moved [here](https://ethereum-magicians.org/t/uncouple-blobs-from-the-execution-payload/13059) by @dankrad  suggestion

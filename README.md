@@ -57,10 +57,28 @@ from the project subpath (`https://<user>.github.io/ethresearch-reader/`).
 
 ### Which authors / how many
 
-`fetch-posts.js` reads `…/directory_items.json?order=likes_received&period=all`, takes the
-top `TOP_N` users (default 10, override with `TOP_N=20 npm run scrape`), then pulls every
-topic each of them **created** (via `/topics/created-by/{user}.json`) and its first post
-(`/raw/{id}/1`). Re-runs skip posts already on disk, so it is safe to resume.
+`fetch-posts.js` reads `…/directory_items.json?order=likes_received&period=all`, takes a
+ranking slice, then pulls every topic each user **created** (via
+`/topics/created-by/{user}.json`) and its first post (`/raw/{id}/1`). Re-runs skip posts
+already on disk, so it is safe to resume.
+
+Select which part of the ranking to fetch:
+
+```bash
+RANK_FROM=1  RANK_TO=10 npm run scrape   # top 10 (default)
+RANK_FROM=11 RANK_TO=20 npm run scrape   # the next 10
+```
+
+**Authenticated access (recommended).** Provide an ethresear.ch API key and requests are
+made via `Api-Key`/`Api-Username` (sanctioned, higher rate limits) instead of anonymous
+scraping. The key is a **secret — never commit it**:
+
+```bash
+export ETHRESEARCH_API_KEY=…            # or place it in ../ethresearch_read_key.txt (outside the repo)
+export ETHRESEARCH_API_USER=Nero_eth    # optional; any valid username for a global key
+```
+
+`.gitignore` excludes the key file, and the key is read only at runtime.
 
 ## Adding / refreshing
 

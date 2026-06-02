@@ -1,0 +1,1 @@
+The Execution Layer Research category is for research topics related specifically to the Execution Layer of Ethereum (previously often described as "eth1" [minus PoW]). This includes the EVM, state, sync, transactions, and other items concerning the layer of Ethereum relevant to users, their accounts, dapps, and transactions.

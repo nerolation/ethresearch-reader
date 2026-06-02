@@ -1,0 +1,1 @@
+I've read and seen in some talks that Plasma can be implemented on Ethereum after Metropolis launches. What feature does Metropolis introduce that Plasma is going to require? I figure it is something to do with account abstraction, but I'm not certain the details.
