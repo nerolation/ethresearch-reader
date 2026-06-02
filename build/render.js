@@ -361,6 +361,7 @@ export function renderPost(rawMarkdown, opts = {}) {
     html,
     headings: extractHeadings(html),
     excerpt: makeExcerpt(processed),
+    searchText: plainText(processed).slice(0, 1800), // for the full-text search index
     words,
     readingMinutes: Math.max(1, Math.round(words / 200)),
   };

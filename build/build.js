@@ -82,6 +82,7 @@ function buildPosts() {
       html: r.html,
       headings: r.headings || [],
       excerpt: r.excerpt || '',
+      searchText: r.searchText || '',
       readingMinutes: r.readingMinutes,
       words: r.words,
       author,
@@ -183,6 +184,17 @@ function main() {
     main: indexMain(posts, topTags, authors),
   });
   fs.writeFileSync(path.join(SITE, 'index.html'), indexHtml);
+
+  // Search index (titles + body text) for the typeahead / full-text search.
+  const searchIndex = posts.map((p) => ({
+    s: p.slug,
+    t: p.titlePlain,
+    a: p.author.name,
+    d: p.dateLabel,
+    tl: p.titlePlain.toLowerCase(),
+    bl: `${p.titlePlain} ${p.author.name} ${p.tags.join(' ')} ${p.searchText}`.toLowerCase(),
+  }));
+  fs.writeFileSync(path.join(SITE, 'search-index.json'), JSON.stringify(searchIndex));
 
   console.log(`Built ${posts.length} posts + index → ${path.relative(ROOT, SITE)}/`);
   console.log(`Authors: ${authors.length} | tags: ${tags.length} (showing ${topTags.length}) | images: ${fs.existsSync(path.join(SITE, 'images')) ? fs.readdirSync(path.join(SITE, 'images')).length : 0}`);

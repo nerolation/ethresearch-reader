@@ -198,7 +198,7 @@ function postEntry(post) {
     .slice(0, 3)
     .map((t) => `<button type="button" class="entry-tag tag-filter-btn" data-tag="${escapeAttr(t)}" title="Filter by ${escapeAttr(t)}">${escapeHtml(t)}</button>`)
     .join('');
-  return `<li class="entry" data-title="${escapeAttr(post.titlePlain.toLowerCase())}" data-date="${escapeAttr(post.createdAt || '')}" data-likes="${post.likes ?? 0}" data-tags="${escapeAttr(post.tags.join(' '))}" data-author="${escapeAttr(authorKey)}" data-search="${escapeAttr(search)}">
+  return `<li class="entry" data-slug="${escapeAttr(post.slug)}" data-title="${escapeAttr(post.titlePlain.toLowerCase())}" data-date="${escapeAttr(post.createdAt || '')}" data-likes="${post.likes ?? 0}" data-tags="${escapeAttr(post.tags.join(' '))}" data-author="${escapeAttr(authorKey)}" data-search="${escapeAttr(search)}">
   <a class="entry-link" href="${escapeAttr(post.slug)}.html">
     <h2 class="entry-title">${post.titleHtml}</h2>
     ${post.excerpt ? `<p class="entry-excerpt">${escapeHtml(post.excerpt)}</p>` : ''}
@@ -238,7 +238,8 @@ export function indexMain(posts, tags, authors) {
   <div class="toolbar">
     <div class="search-box">
       ${I.search}
-      <input type="search" id="search" placeholder="Search ${posts.length} posts&hellip;" autocomplete="off" aria-label="Search posts">
+      <input type="search" id="search" placeholder="Search ${posts.length} posts&hellip;" autocomplete="off" aria-label="Search posts" role="combobox" aria-expanded="false" aria-controls="searchSuggest" aria-autocomplete="list">
+      <ul class="search-suggest" id="searchSuggest" role="listbox" hidden></ul>
     </div>
     <label class="sort-box">Sort
       <select id="sort" aria-label="Sort posts">

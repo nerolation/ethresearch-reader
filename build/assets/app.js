@@ -121,11 +121,12 @@
   if (!list) return;
 
   var cards = Array.prototype.slice.call(list.querySelectorAll('.entry'));
-  var ordered = cards.slice(); // current display order
+  var ordered = cards.slice(); // current sort order
   var sentinel = document.getElementById('loadMore');
   var PAGE = 24; // entries revealed per batch
   var shown = PAGE;
   var search = document.getElementById('search');
+  var suggest = document.getElementById('searchSuggest');
   var sortSel = document.getElementById('sort');
   var tagFilter = document.getElementById('tagFilter');
   var authorFilter = document.getElementById('authorFilter');
@@ -133,6 +134,25 @@
   var resultCount = document.getElementById('resultCount');
   var emptyState = document.getElementById('emptyState');
   var filters = { tag: [], author: [] };
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; });
+  }
+
+  // Full-text index (titles + body), fetched lazily on first search interaction.
+  var searchIndex = null, idxBySlug = {};
+  function loadIndex() {
+    if (searchIndex || loadIndex._p) return;
+    loadIndex._p = fetch('search-index.json')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        searchIndex = data;
+        data.forEach(function (r) { idxBySlug[r.s] = r; });
+        var q = (search && search.value || '').trim().toLowerCase();
+        if (q) { render(); buildSuggestions(q); } // upgrade to full-text now that it's ready
+      })
+      .catch(function () {});
+  }
 
   function syncGroup(container, attr) {
     if (!container) return;
@@ -145,32 +165,40 @@
     });
   }
 
-  function matchesCard(card, q) {
-    var mSearch = !q || (card.getAttribute('data-search') || '').indexOf(q) !== -1;
+  function passesFilters(card) {
     var cardTags = (card.getAttribute('data-tags') || '').split(/\s+/);
     var mTag = filters.tag.length === 0 || filters.tag.some(function (t) { return cardTags.indexOf(t) !== -1; });
     var mAuthor = filters.author.length === 0 || filters.author.indexOf(card.getAttribute('data-author')) !== -1;
-    return mSearch && mTag && mAuthor;
+    return mTag && mAuthor;
   }
 
-  // Render in display order, revealing only the first `shown` matching entries.
+  // Title matches first, then body/full-text matches; each group keeps the sort
+  // order. Display order is driven by CSS `order` (flex), so no DOM moves.
   function render() {
     var q = (search && search.value || '').trim().toLowerCase();
-    var matched = 0;
+    var titleHits = [], textHits = [];
     ordered.forEach(function (card) {
-      if (matchesCard(card, q)) {
-        matched++;
-        card.hidden = matched > shown;
-      } else {
-        card.hidden = true;
+      if (!passesFilters(card)) { card.hidden = true; return; }
+      if (!q) { titleHits.push(card); return; }
+      var rec = idxBySlug[card.getAttribute('data-slug')];
+      var titleHit, anyHit;
+      if (rec) {
+        titleHit = rec.tl.indexOf(q) !== -1;
+        anyHit = titleHit || rec.bl.indexOf(q) !== -1;
+      } else { // index not loaded yet — fall back to the inline data-search blob
+        titleHit = (card.getAttribute('data-title') || '').indexOf(q) !== -1;
+        anyHit = titleHit || (card.getAttribute('data-search') || '').indexOf(q) !== -1;
       }
+      if (anyHit) (titleHit ? titleHits : textHits).push(card);
+      else card.hidden = true;
     });
+    var result = titleHits.concat(textHits);
+    result.forEach(function (card, i) { card.style.order = i; card.hidden = i >= shown; });
+    var matched = result.length;
     var filtered = q || filters.tag.length || filters.author.length;
-    if (resultCount) {
-      resultCount.textContent = filtered ? matched + ' of ' + cards.length + ' posts' : cards.length + ' posts';
-    }
+    if (resultCount) resultCount.textContent = filtered ? matched + ' of ' + cards.length + ' posts' : cards.length + ' posts';
     if (emptyState) emptyState.hidden = matched !== 0;
-    if (sentinel) sentinel.hidden = matched <= shown; // hide trigger when nothing left to load
+    if (sentinel) sentinel.hidden = matched <= shown;
   }
 
   function apply() { shown = PAGE; render(); } // reset the window on filter/search/sort change
@@ -185,30 +213,74 @@
       if (mode === 'title') return ta.localeCompare(tb) || db.localeCompare(da);
       return db.localeCompare(da) || ta.localeCompare(tb); // newest
     });
-    ordered.forEach(function (c) { list.appendChild(c); });
     apply();
   }
 
-  // Infinite scroll: reveal more as the sentinel nears the viewport. A rAF-throttled
-  // scroll/resize handler with a "fill" loop also covers very tall viewports.
+  /* ---- typeahead suggestions ----------------------------------------- */
+  var sgActive = -1;
+  function highlight(text, q) {
+    var i = text.toLowerCase().indexOf(q);
+    if (i < 0) return escapeHtml(text);
+    return escapeHtml(text.slice(0, i)) + '<mark>' + escapeHtml(text.slice(i, i + q.length)) + '</mark>' + escapeHtml(text.slice(i + q.length));
+  }
+  function closeSuggest() {
+    if (suggest) { suggest.hidden = true; suggest.innerHTML = ''; }
+    sgActive = -1;
+    if (search) { search.setAttribute('aria-expanded', 'false'); search.removeAttribute('aria-activedescendant'); }
+  }
+  function buildSuggestions(q) {
+    if (!suggest || !search) return;
+    if (!q) { closeSuggest(); return; }
+    if (!searchIndex) { loadIndex(); return; } // will rebuild once the index arrives
+    var pre = [], inc = [];
+    for (var i = 0; i < searchIndex.length; i++) {
+      var r = searchIndex[i], pos = r.tl.indexOf(q);
+      if (pos === 0) pre.push(r); else if (pos > 0) inc.push(r);
+    }
+    var items = pre.concat(inc).slice(0, 7); // prefix matches first
+    sgActive = -1;
+    if (!items.length) {
+      suggest.innerHTML = '<li class="sg-empty">No title matches — see full-text results below</li>';
+    } else {
+      suggest.innerHTML = items.map(function (r, idx) {
+        return '<li class="sg-item" role="option" id="sg' + idx + '" data-slug="' + escapeHtml(r.s) + '">'
+          + '<span class="sg-title">' + highlight(r.t, q) + '</span>'
+          + '<span class="sg-meta">' + escapeHtml(r.a) + (r.d ? ' · ' + escapeHtml(r.d) : '') + '</span></li>';
+      }).join('');
+    }
+    suggest.hidden = false;
+    search.setAttribute('aria-expanded', 'true');
+  }
+  function setActive(n) {
+    var els = suggest ? suggest.querySelectorAll('.sg-item') : [];
+    if (!els.length) return;
+    sgActive = (n + els.length) % els.length;
+    for (var i = 0; i < els.length; i++) els[i].classList.toggle('active', i === sgActive);
+    search.setAttribute('aria-activedescendant', 'sg' + sgActive);
+    els[sgActive].scrollIntoView({ block: 'nearest' });
+  }
+  function go(slug) { if (slug) window.location.href = slug + '.html'; }
+  if (suggest) {
+    suggest.addEventListener('mousedown', function (e) { e.preventDefault(); }); // keep input focus
+    suggest.addEventListener('click', function (e) {
+      var it = e.target.closest('.sg-item');
+      if (it) go(it.getAttribute('data-slug'));
+    });
+  }
+
+  /* ---- infinite scroll ----------------------------------------------- */
   function nearBottom() {
     if (!sentinel || sentinel.hidden) return false;
     var vh = window.innerHeight || document.documentElement.clientHeight;
     return sentinel.getBoundingClientRect().top < vh + 600;
   }
-  function fill() {
-    var guard = 0;
-    while (nearBottom() && guard++ < 60) loadMore();
-  }
+  function fill() { var g = 0; while (nearBottom() && g++ < 60) loadMore(); }
   var ticking = false;
-  function onScroll() {
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(function () { ticking = false; fill(); });
-  }
+  function onScroll() { if (ticking) return; ticking = true; requestAnimationFrame(function () { ticking = false; fill(); }); }
   document.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll, { passive: true });
 
+  /* ---- filter chips -------------------------------------------------- */
   function bindGroup(container, attr) {
     if (!container) return;
     var key = attr === 'data-tag' ? 'tag' : 'author';
@@ -216,18 +288,12 @@
       var btn = e.target.closest('.tag-chip');
       if (!btn) return;
       var v = btn.getAttribute(attr);
-      if (v === '') {
-        filters[key] = [];
-      } else {
-        var i = filters[key].indexOf(v);
-        if (i === -1) filters[key].push(v); else filters[key].splice(i, 1);
-      }
+      if (v === '') filters[key] = [];
+      else { var i = filters[key].indexOf(v); if (i === -1) filters[key].push(v); else filters[key].splice(i, 1); }
       syncGroup(container, attr);
       apply();
     });
   }
-
-  // Tag pills on the cards act as quick filters.
   list.addEventListener('click', function (e) {
     var btn = e.target.closest('.tag-filter-btn');
     if (!btn) return;
@@ -239,7 +305,7 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
-  // Deep links: ?q=, ?tag=, ?author=
+  /* ---- deep links: ?q=, ?tag=, ?author= ------------------------------ */
   try {
     var params = new URLSearchParams(window.location.search);
     if (search && (params.get('q') || params.get('search'))) search.value = params.get('q') || params.get('search');
@@ -250,14 +316,37 @@
 
   bindGroup(tagFilter, 'data-tag');
   bindGroup(authorFilter, 'data-author');
-  if (search) search.addEventListener('input', apply);
+
+  if (search) {
+    search.addEventListener('focus', loadIndex);
+    search.addEventListener('input', function () {
+      loadIndex();
+      var q = search.value.trim().toLowerCase();
+      apply();
+      buildSuggestions(q);
+    });
+    search.addEventListener('keydown', function (e) {
+      var open = suggest && !suggest.hidden;
+      if (e.key === 'ArrowDown') { if (open) { e.preventDefault(); setActive(sgActive + 1); } }
+      else if (e.key === 'ArrowUp') { if (open) { e.preventDefault(); setActive(sgActive - 1); } }
+      else if (e.key === 'Enter') {
+        var els = suggest ? suggest.querySelectorAll('.sg-item') : [];
+        if (open && sgActive >= 0 && els[sgActive]) { e.preventDefault(); go(els[sgActive].getAttribute('data-slug')); return; }
+        closeSuggest();
+      } else if (e.key === 'Escape') {
+        if (open) { e.preventDefault(); closeSuggest(); }
+        else { search.value = ''; apply(); closeSuggest(); search.blur(); }
+      }
+    });
+    search.addEventListener('blur', function () { setTimeout(closeSuggest, 120); });
+    if (search.value.trim()) loadIndex();
+  }
   if (sortSel) sortSel.addEventListener('change', function () { sortCards(sortSel.value); });
 
-  // "/" focuses search; Escape clears it.
+  // "/" focuses the search box from anywhere.
   document.addEventListener('keydown', function (e) {
     var tag = (e.target && e.target.tagName) || '';
     if (e.key === '/' && !/^(INPUT|TEXTAREA|SELECT)$/.test(tag) && search) { e.preventDefault(); search.focus(); }
-    else if (e.key === 'Escape' && document.activeElement === search) { search.value = ''; apply(); search.blur(); }
   });
 
   syncGroup(tagFilter, 'data-tag');
