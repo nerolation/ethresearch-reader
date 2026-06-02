@@ -1,0 +1,20 @@
+{
+  "name": "ethresearch-reader",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A clean, elegant static reading interface for ethresear.ch posts",
+  "scripts": {
+    "scrape": "node build/fetch-posts.js",
+    "fetch": "node build/fetch-meta.js",
+    "build": "node build/build.js",
+    "all": "node build/fetch-posts.js && node build/build.js"
+  },
+  "dependencies": {
+    "highlight.js": "^11.11.1",
+    "katex": "^0.16.47",
+    "markdown-it": "^14.2.0",
+    "markdown-it-anchor": "^9.2.0",
+    "markdown-it-texmath": "^1.0.0"
+  }
+}

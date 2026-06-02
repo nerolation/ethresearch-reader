@@ -1,0 +1,1 @@
+I wonder if any one at this message board is looking on a VDF (verifiable delay function) which is efficiently verifiable in Solidity? We need random numbers in our project, and are looking on implementing such a VDF.  The question is, how much gas would it take to verify a VDF in Solidity, and is it practical to do it ?

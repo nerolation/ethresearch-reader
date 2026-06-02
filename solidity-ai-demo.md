@@ -1,0 +1,3 @@
+A demo of first-ever AI-enabled in a Solidity smart contract running on ETH side chain.  An image is being uploaded into a decentralized social network running on a blockchain.  Once the image is uploaded into the blockchain file storage, a precompiled SmartContract analyzes it using Resnet50 neural network, and rejects it if it contains an image of a cat. 
+
+https://www.youtube.com/watch?v=YT4kvqMQLo8&t=133s

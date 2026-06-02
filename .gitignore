@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+
+# build output — regenerate with `npm run build`
+site/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.log
+*.swp
+.idea/
+.vscode/
+
+# secrets & keys — NEVER commit
+.env
+.env.*
+*.pem
+*.key
+*.ppk
+id_rsa*
+id_ed25519*
+*_deploy
+*_deploy.pub
+*.secret
+credentials*
+secrets*
+.netrc

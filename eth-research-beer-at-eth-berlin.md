@@ -1,0 +1,1 @@
+Anyone else from the  ETH Research messageboard coming to ETH Berlin ? We  can socialize on Saturday evening.
