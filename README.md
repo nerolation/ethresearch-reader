@@ -48,7 +48,12 @@ Then open `site/index.html`, or serve it:
 python3 -m http.server -d site 8000   # → http://localhost:8000
 ```
 
-Deploy by uploading `site/` to any static host (GitHub Pages, Netlify, S3, …).
+Deploy by uploading `site/` to any static host (Netlify, S3, …).
+
+**GitHub Pages** is automated: `.github/workflows/deploy.yml` runs `npm ci && npm run build`
+on every push to `main` and publishes `site/`. Enable it once under **Settings → Pages →
+Build and deployment → Source: GitHub Actions**. The site uses relative paths, so it works
+from the project subpath (`https://<user>.github.io/ethresearch-reader/`).
 
 ### Which authors / how many
 
