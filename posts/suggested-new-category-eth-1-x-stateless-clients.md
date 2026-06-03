@@ -1,0 +1,1 @@
+I'm starting to organize an Eth 1.x research group around the topic of stateless clients in the context of the 1.0 mainnet.  Can we get a category made for this?

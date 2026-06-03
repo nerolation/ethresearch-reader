@@ -1,0 +1,5 @@
+This may be a stupid question, please forgive me in advance. A common adage is that if someone tries to re-org under Casper, a minimum of 1/3 of staked ETH get slashed.
+
+My understanding is that slashing for equivocation only occurs when a validator signs two votes at the same height ([e.g., what I read here](https://ethresear.ch/t/what-will-happen-in-casper-ffg-if-two-branches-both-get-significant-amount-of-votes/5335)) _not_ if they vote for conflicting histories. What if someone executes a re-org (or a long-range attack) and carefully staggers her votes such that she only gets hit by inactivity leak, and never actually votes for two blocks at the same height, therefore never getting hit by slashing? Will the inactivity leak in this case be equal in magnitude to slashing (I don't think it is, even remotely)? In this situation my concern is less that the 2/3 honest validator assumption is violated and more that "economic finality" doesn't seem to hold. What did I miss?
+
+I know that weak subjectivity can technically be used to hand-wave away this issue, but again this doesn't help us with "economic finality."

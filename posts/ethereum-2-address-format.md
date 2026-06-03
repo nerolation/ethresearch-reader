@@ -1,0 +1,1 @@
+Has there been any thought given to the format for Ethereum 2 addresses?  Obviously we can stick with the current format, but do we want to do anything different?  Explicit checksums/error detection?  A different encoding system such as https://github.com/bitcoin/bips/blob/33e6283a68ad4573d7418152350f93e39dc7e2cd/bip-0173.mediawiki ?

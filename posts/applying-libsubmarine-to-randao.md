@@ -1,0 +1,3 @@
+In previous post, Vitalik went over the manipulability of RANDAO (https://ethresear.ch/t/rng-exploitability-analysis-assuming-pure-randao-based-main-chain/1825/5 and https://ethresear.ch/t/randao-beacon-exploitability-analysis-round-2/1980).
+
+Would applying something like LibSubmarine (https://hackernoon.com/libsubmarine-temporarily-hide-transactions-on-ethereum-cheaply-6910191f46f2?gi=ffb1a94bc2a1) decrease the influence of the last revealer having power over the final random number?

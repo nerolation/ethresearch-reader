@@ -214,12 +214,15 @@ function postEntry(post) {
 }
 
 export function indexMain(posts, tags, authors) {
-  const authorButtons = authors
-    .map(
-      (a) =>
-        `<button class="tag-chip author-chip" type="button" data-author="${escapeAttr((a.username || a.name).toLowerCase())}" aria-pressed="false">${miniAvatar(a)}${escapeHtml(a.name)} <span class="tag-count">${a.count}</span></button>`
-    )
-    .join('');
+  const AUTHOR_PRIMARY = 12; // most-prolific authors shown by default; rest behind "+N more"
+  const authorChip = (a, isExtra) =>
+    `<button class="tag-chip author-chip${isExtra ? ' author-extra' : ''}" type="button" data-author="${escapeAttr((a.username || a.name).toLowerCase())}" aria-pressed="false">${miniAvatar(a)}${escapeHtml(a.name)} <span class="tag-count">${a.count}</span></button>`;
+  const authorButtons =
+    authors.slice(0, AUTHOR_PRIMARY).map((a) => authorChip(a, false)).join('') +
+    authors.slice(AUTHOR_PRIMARY).map((a) => authorChip(a, true)).join('') +
+    (authors.length > AUTHOR_PRIMARY
+      ? `<button type="button" class="more-toggle" id="moreAuthors" aria-expanded="false" aria-controls="authorFilter">+${authors.length - AUTHOR_PRIMARY} more</button>`
+      : '');
   const tagButtons = tags
     .map(
       (t) =>

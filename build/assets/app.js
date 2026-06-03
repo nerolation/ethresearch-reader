@@ -317,6 +317,17 @@
   bindGroup(tagFilter, 'data-tag');
   bindGroup(authorFilter, 'data-author');
 
+  // "+N more" / "Show fewer" for the author chips.
+  var moreAuthors = document.getElementById('moreAuthors');
+  if (moreAuthors && authorFilter) {
+    var nExtra = authorFilter.querySelectorAll('.author-extra').length;
+    moreAuthors.addEventListener('click', function () {
+      var exp = authorFilter.classList.toggle('expanded');
+      moreAuthors.setAttribute('aria-expanded', exp ? 'true' : 'false');
+      moreAuthors.textContent = exp ? 'Show fewer' : '+' + nExtra + ' more';
+    });
+  }
+
   if (search) {
     search.addEventListener('focus', loadIndex);
     search.addEventListener('input', function () {

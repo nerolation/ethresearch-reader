@@ -370,8 +370,11 @@ html[data-theme='dark'] .post-body img { background: #f7f7f4; padding: 2px; }
 
 .result-count { font-family: var(--font-sans); font-size: 0.82rem; color: var(--text-mute); margin: 0 0 1rem; }
 
-/* author filter (centered avatar chips) */
+/* author filter (centered avatar chips; top ~12 shown, rest behind "+N more") */
 .authors-row { justify-content: center; margin-bottom: 0.9rem; }
+.authors-row:not(.expanded) .author-extra { display: none; }
+.more-toggle { font-family: var(--font-sans); font-size: 0.78rem; color: var(--accent); background: none; border: 1px dashed var(--border-strong); border-radius: 100px; padding: 0.32rem 0.8rem; cursor: pointer; transition: background .14s, border-color .14s; }
+.more-toggle:hover { background: var(--accent-soft); border-color: var(--accent); }
 
 /* topics disclosure */
 .topics { text-align: center; margin-bottom: 1.5rem; }

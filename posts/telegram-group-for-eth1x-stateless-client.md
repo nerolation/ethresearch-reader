@@ -1,0 +1,1 @@
+I've got a telegram group setup for the Eth1x stateless client effort.  Please reach out if you'd like to be added.
