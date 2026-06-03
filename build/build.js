@@ -57,6 +57,33 @@ function vendorAssets() {
   fs.copyFileSync(path.join(SRC_ASSETS, 'app.js'), path.join(ASSETS, 'app.js'));
 }
 
+// Self-contained stylesheet for downloaded offline files: the site CSS with CMU
+// fonts inlined as data URIs, plus overrides to render math via native MathML
+// (so no KaTeX font files are needed offline).
+function buildOfflineCss() {
+  let css = fs.readFileSync(path.join(SRC_ASSETS, 'style.css'), 'utf8');
+  const cmuDir = path.join(ROOT, 'build', 'vendor', 'cmu');
+  for (const style of CMU_FONTS) {
+    const f = path.join(cmuDir, `cmu-serif-${style}.woff2`);
+    if (!fs.existsSync(f)) continue;
+    const b64 = fs.readFileSync(f).toString('base64');
+    css = css.replace(`url('fonts/cmu-serif-${style}.woff2')`, `url('data:font/woff2;base64,${b64}')`);
+  }
+  css +=
+    '\n/* --- offline overrides --- */\n' +
+    '.katex .katex-html{display:none!important}\n' +
+    '.katex .katex-mathml{position:static!important;clip:auto!important;-webkit-clip-path:none!important;clip-path:none!important;width:auto!important;height:auto!important;overflow:visible!important;padding:0!important}\n' +
+    '.katex-display{display:block;text-align:center;margin:1.2em 0;overflow-x:auto}\n' +
+    '.offline-head{max-width:var(--measure);margin:0 auto;padding:2.2rem clamp(1.1rem,4vw,2rem) 1.2rem;text-align:center;border-bottom:1px solid var(--border)}\n' +
+    '.offline-head h1{margin:0 0 .35rem;font-size:1.9rem;letter-spacing:-.02em}\n' +
+    '.offline-head p{margin:0;font-family:var(--font-sans);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-mute)}\n' +
+    '.offline article.post{padding-top:2.6rem}\n' +
+    '.offline article.post+article.post{border-top:1px solid var(--border);margin-top:1rem}\n' +
+    '.post-byline{font-family:var(--font-sans);font-size:.85rem;color:var(--text-mute);margin:-.3rem 0 1.6rem}\n' +
+    '.post-byline a{color:var(--accent)}\n';
+  fs.writeFileSync(path.join(SITE, 'offline.css'), css);
+}
+
 function buildPosts() {
   const meta = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'meta.json'), 'utf8'));
   const slugs = listSlugs();
@@ -195,6 +222,8 @@ function main() {
     bl: `${p.titlePlain} ${p.author.name} ${p.tags.join(' ')} ${p.searchText}`.toLowerCase(),
   }));
   fs.writeFileSync(path.join(SITE, 'search-index.json'), JSON.stringify(searchIndex));
+
+  buildOfflineCss(); // self-contained stylesheet for offline downloads
 
   console.log(`Built ${posts.length} posts + index → ${path.relative(ROOT, SITE)}/`);
   console.log(`Authors: ${authors.length} | tags: ${tags.length} (showing ${topTags.length}) | images: ${fs.existsSync(path.join(SITE, 'images')) ? fs.readdirSync(path.join(SITE, 'images')).length : 0}`);

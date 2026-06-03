@@ -116,6 +116,111 @@
     onTocScroll();
   }
 
+  /* ---- Offline selection + single-file download (all pages) ---------- */
+  (function offline() {
+    var KEY = 'ethr-offline-selection';
+    var sel;
+    try { sel = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { sel = []; }
+    function persist() { try { localStorage.setItem(KEY, JSON.stringify(sel)); } catch (e) {} }
+    var bar = document.getElementById('dlBar');
+    var countEl = document.getElementById('dlCount');
+    var goBtn = document.getElementById('dlGo');
+    var clearBtn = document.getElementById('dlClear');
+    function has(s) { return sel.indexOf(s) !== -1; }
+    function toggle(s) {
+      var i = sel.indexOf(s);
+      if (i === -1) sel.push(s); else sel.splice(i, 1);
+      persist(); syncAll();
+    }
+    function syncAll() {
+      if (bar && countEl) {
+        bar.hidden = sel.length === 0;
+        countEl.textContent = sel.length + (sel.length === 1 ? ' post selected' : ' posts selected');
+      }
+      document.querySelectorAll('.entry-check').forEach(function (b) {
+        var on = has(b.getAttribute('data-slug'));
+        b.setAttribute('aria-checked', on ? 'true' : 'false');
+        var li = b.closest('.entry'); if (li) li.classList.toggle('selected', on);
+      });
+      document.querySelectorAll('.save-offline').forEach(function (b) {
+        var on = has(b.getAttribute('data-slug'));
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        var lbl = b.querySelector('.so-label'); if (lbl) lbl.textContent = on ? 'Saved for offline' : 'Save for offline';
+      });
+    }
+    document.addEventListener('click', function (e) {
+      var chk = e.target.closest && e.target.closest('.entry-check');
+      if (chk) { e.preventDefault(); toggle(chk.getAttribute('data-slug')); return; }
+      var sv = e.target.closest && e.target.closest('.save-offline');
+      if (sv) { toggle(sv.getAttribute('data-slug')); }
+    });
+    if (clearBtn) clearBtn.addEventListener('click', function () { sel = []; persist(); syncAll(); });
+    if (goBtn) goBtn.addEventListener('click', buildDownload);
+
+    function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
+    function escAttr(s) { return esc(s).replace(/"/g, '&quot;'); }
+
+    async function buildDownload() {
+      if (!sel.length || !goBtn) return;
+      var label = goBtn.innerHTML;
+      goBtn.disabled = true; goBtn.textContent = 'Preparing…';
+      try {
+        var css = await fetch('offline.css').then(function (r) { return r.text(); });
+        var cache = {};
+        async function inlineImg(src) {
+          if (cache[src]) return cache[src];
+          try {
+            var blob = await fetch(src).then(function (r) { return r.blob(); });
+            var data = await new Promise(function (res, rej) { var fr = new FileReader(); fr.onload = function () { res(fr.result); }; fr.onerror = rej; fr.readAsDataURL(blob); });
+            cache[src] = data; return data;
+          } catch (e) { return src; } // cross-origin (ethresear.ch uploads): leave as-is
+        }
+        var parser = new DOMParser();
+        var articles = [];
+        for (var k = 0; k < sel.length; k++) {
+          try {
+            var html = await fetch(sel[k] + '.html').then(function (r) { return r.text(); });
+            var doc = parser.parseFromString(html, 'text/html');
+            var body = doc.querySelector('.post-body'); if (!body) continue;
+            var titleEl = doc.querySelector('.post-title');
+            var authorEl = doc.querySelector('.post-meta .byline span');
+            var timeEl = doc.querySelector('.post-meta time');
+            var likeEl = doc.querySelector('.like-btn');
+            var orig = likeEl ? likeEl.getAttribute('href') : '';
+            body.querySelectorAll('.code-copy, .heading-anchor').forEach(function (e) { e.remove(); });
+            var imgs = body.querySelectorAll('img');
+            for (var ii = 0; ii < imgs.length; ii++) {
+              var s = imgs[ii].getAttribute('src');
+              if (s && s.indexOf('data:') !== 0) { imgs[ii].setAttribute('src', await inlineImg(s)); imgs[ii].removeAttribute('loading'); }
+            }
+            articles.push('<article class="post"><div class="post-body"><h1 class="post-title">' + (titleEl ? titleEl.innerHTML : esc(sel[k])) + '</h1>'
+              + '<p class="post-byline">' + esc(authorEl ? authorEl.textContent : '') + (timeEl ? ' · ' + esc(timeEl.textContent) : '')
+              + (orig ? ' · <a href="' + escAttr(orig) + '">View original ↗</a>' : '') + '</p>'
+              + body.innerHTML + '</div></article>');
+          } catch (e) {}
+        }
+        if (!articles.length) throw new Error('nothing to export');
+        var date = new Date().toISOString().slice(0, 10);
+        var out = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
+          + '<title>Ethereum Research — offline (' + articles.length + ' posts)</title>'
+          + '<script>try{document.documentElement.setAttribute("data-theme",(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light");}catch(e){}<\/script>'
+          + '<style>' + css + '</style></head><body class="offline">'
+          + '<header class="offline-head"><h1>Ethereum Research</h1><p>Offline selection · ' + articles.length + ' posts · ' + date + '</p></header><main>'
+          + articles.join('\n') + '</main></body></html>';
+        var url = URL.createObjectURL(new Blob([out], { type: 'text/html' }));
+        var a = document.createElement('a');
+        a.href = url; a.download = 'ethresearch-offline-' + articles.length + '-posts.html';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
+      } catch (e) {
+        alert('Sorry, the offline download failed: ' + (e && e.message || e));
+      }
+      goBtn.disabled = false; goBtn.innerHTML = label;
+    }
+
+    syncAll();
+  })();
+
   /* ---- Index: search, author + tag filters, sort ---------------------- */
   var list = document.getElementById('postList');
   if (!list) return;

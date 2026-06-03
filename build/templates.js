@@ -31,6 +31,8 @@ const I = {
   search:
     '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>',
   up: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
+  bookmark: '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" class="i-bm"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>',
+  down: '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" class="i-dl"><path d="M12 4v11m0 0 4-4m-4 4-4-4M5 20h14"/></svg>',
 };
 
 const FAVICON =
@@ -98,6 +100,13 @@ ${siteHeader(base)}
 ${main}
 </main>
 ${siteFooter()}
+<div class="dl-bar" id="dlBar" hidden role="region" aria-label="Offline selection">
+  <span class="dl-count" id="dlCount"></span>
+  <span class="dl-actions">
+    <button class="dl-go" id="dlGo" type="button">${I.down}<span>Download</span></button>
+    <button class="dl-clear" id="dlClear" type="button">Clear</button>
+  </span>
+</div>
 <script src="${base}assets/app.js" defer></script>
 </body>
 </html>`;
@@ -173,6 +182,7 @@ ${post.html}
     <a class="like-btn" href="${escapeAttr(post.url)}" target="_blank" rel="noopener" title="Opens the original thread on ethresear.ch, where you can like it">
       ${I.heart}<span class="like-label">Like on ethresear.ch</span>${post.likes != null ? `<span class="like-count">${post.likes}</span>` : ''}${I.ext}
     </a>
+    <button class="save-offline" type="button" data-slug="${escapeAttr(post.slug)}" aria-pressed="false">${I.bookmark}<span class="so-label">Save for offline</span></button>
     <a class="discuss-link" href="${escapeAttr(post.url)}" target="_blank" rel="noopener">Read the replies &amp; discuss on ethresear.ch ${I.ext}</a>
   </div>
   ${related}
@@ -199,6 +209,7 @@ function postEntry(post) {
     .map((t) => `<button type="button" class="entry-tag tag-filter-btn" data-tag="${escapeAttr(t)}" title="Filter by ${escapeAttr(t)}">${escapeHtml(t)}</button>`)
     .join('');
   return `<li class="entry" data-slug="${escapeAttr(post.slug)}" data-title="${escapeAttr(post.titlePlain.toLowerCase())}" data-date="${escapeAttr(post.createdAt || '')}" data-likes="${post.likes ?? 0}" data-tags="${escapeAttr(post.tags.join(' '))}" data-author="${escapeAttr(authorKey)}" data-search="${escapeAttr(search)}">
+  <button class="entry-check" type="button" role="checkbox" aria-checked="false" data-slug="${escapeAttr(post.slug)}" aria-label="Select &ldquo;${escapeAttr(post.titlePlain)}&rdquo; for offline"></button>
   <a class="entry-link" href="${escapeAttr(post.slug)}.html">
     <h2 class="entry-title">${post.titleHtml}</h2>
     ${post.excerpt ? `<p class="entry-excerpt">${escapeHtml(post.excerpt)}</p>` : ''}

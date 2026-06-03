@@ -13,6 +13,11 @@ Static, read-only reader for ethresear.ch posts (top-N most-liked authors' autho
 - `data/meta.json` — author/date/likes/tags/canonical id. `data/avatars/`.
 - `build/` — `fetch-posts.js`, `fetch-meta.js`, `render.js`, `templates.js`, `build.js`, `assets/{style.css,app.js}`, `vendor/cmu/` (woff2).
 - `site/` — build output (git-ignored). `node_modules/` git-ignored.
+- Build artifacts in `site/`: `search-index.json` (typeahead/full-text), `offline.css` (self-contained: CMU fonts inlined, math via native MathML).
+
+## Homepage / features
+- Index: typeahead search (title-first, full-text), author filter (top-12 + "+N more"), topic disclosure, sort, lazy-load (24/scroll).
+- Offline: select posts (entry checkboxes / per-post "Save for offline") → download bar → one self-contained `.html` (inlined CSS+fonts+images, MathML math). Selection persists in localStorage.
 
 ## Fetch (build/fetch-posts.js)
 - Discourse public endpoints: `/directory_items.json`, `/topics/created-by/{u}.json`, `/raw/{id}/1`, `/t/{id}.json`.

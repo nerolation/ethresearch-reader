@@ -388,7 +388,7 @@ html[data-theme='dark'] .post-body img { background: #f7f7f4; padding: 2px; }
 /* post list — editorial */
 .result-count { text-align: center; margin: 0 0 1.6rem; }
 .entry-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--border); display: flex; flex-direction: column; }
-.entry { padding: 1.7rem 0; border-bottom: 1px solid var(--border); }
+.entry { position: relative; padding: 1.7rem 0 1.7rem 2rem; border-bottom: 1px solid var(--border); transition: background .14s; }
 .entry-link { display: block; color: var(--text); }
 .entry-link:hover { text-decoration: none; color: var(--text); }
 .entry-title { font-size: clamp(1.35rem, 1.2rem + 0.7vw, 1.6rem); line-height: 1.22; font-weight: 700; letter-spacing: -0.018em; margin: 0 0 0.45rem; transition: color .15s; }
@@ -403,6 +403,37 @@ html[data-theme='dark'] .post-body img { background: #f7f7f4; padding: 2px; }
 .entry-tag { font-family: var(--font-sans); font-size: 0.76rem; color: var(--text-mute); background: none; border: none; cursor: pointer; padding: 0; transition: color .14s; }
 .entry-tag::before { content: "#"; opacity: .5; }
 .entry-tag:hover { color: var(--accent); }
+
+/* ---- Offline selection -------------------------------------------------- */
+.entry-check {
+  position: absolute; left: 0; top: 1.95rem; width: 1.15rem; height: 1.15rem;
+  border: 1.5px solid var(--border-strong); border-radius: 50%; background: var(--surface);
+  cursor: pointer; padding: 0; opacity: .5; transition: opacity .14s, background .14s, border-color .14s;
+}
+.entry:hover .entry-check, .entry-check:focus-visible { opacity: 1; }
+.entry-check[aria-checked="true"] { background: var(--accent); border-color: var(--accent); opacity: 1; }
+.entry-check[aria-checked="true"]::after { content: ""; position: absolute; left: 0.34rem; top: 0.13rem; width: 0.28rem; height: 0.55rem; border: solid var(--on-accent); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.entry.selected { background: var(--accent-soft); }
+
+/* "Save for offline" button on post pages */
+.save-offline { display: inline-flex; align-items: center; gap: 0.45rem; font-family: var(--font-sans); font-size: 0.9rem; font-weight: 600; color: var(--accent); background: var(--surface); border: 1.5px solid color-mix(in srgb, var(--accent) 38%, var(--border)); padding: 0.5rem 1.05rem; border-radius: 100px; cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
+.save-offline:hover { background: var(--accent-soft); }
+.save-offline .i-bm { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linejoin: round; }
+.save-offline[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.save-offline[aria-pressed="true"] .i-bm { fill: currentColor; }
+
+/* floating download bar (shared) */
+.dl-bar { position: fixed; left: 50%; transform: translateX(-50%); bottom: 1.2rem; z-index: 60; display: flex; align-items: center; gap: 1rem; padding: 0.55rem 0.6rem 0.55rem 1.2rem; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 100px; box-shadow: var(--shadow); }
+.dl-bar[hidden] { display: none; }
+.dl-count { font-family: var(--font-sans); font-size: 0.86rem; font-weight: 500; color: var(--text); white-space: nowrap; }
+.dl-actions { display: flex; align-items: center; gap: 0.3rem; }
+.dl-go { display: inline-flex; align-items: center; gap: 0.4rem; font-family: var(--font-sans); font-size: 0.86rem; font-weight: 600; color: var(--on-accent); background: var(--accent); border: none; border-radius: 100px; padding: 0.45rem 1rem; cursor: pointer; transition: background .15s; }
+.dl-go:hover { background: var(--accent-strong); }
+.dl-go[disabled] { opacity: .6; cursor: default; }
+.dl-go .i-dl { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.dl-clear { font-family: var(--font-sans); font-size: 0.82rem; color: var(--text-mute); background: none; border: none; cursor: pointer; padding: 0.45rem 0.6rem; border-radius: 100px; }
+.dl-clear:hover { color: var(--accent); }
+@media (max-width: 640px) { .dl-bar { left: 0.8rem; right: 0.8rem; transform: none; justify-content: space-between; } }
 
 .load-sentinel { height: 1px; }
 .empty-state { text-align: center; color: var(--text-mute); font-style: italic; padding: 3rem 0; }
