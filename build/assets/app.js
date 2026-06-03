@@ -162,6 +162,10 @@
 
     async function buildDownload() {
       if (!sel.length || !goBtn) return;
+      if (location.protocol === 'file:') {
+        alert('Offline download needs the site served over http(s) — browsers block reading files from a file:// page.\n\nUse the published site, or run a local server:  python3 -m http.server -d site');
+        return;
+      }
       var label = goBtn.innerHTML;
       goBtn.disabled = true; goBtn.textContent = 'Preparing…';
       try {
@@ -213,7 +217,9 @@
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
       } catch (e) {
-        alert('Sorry, the offline download failed: ' + (e && e.message || e));
+        var msg = (e && e.message) || String(e);
+        if (/fetch|load failed|networkerror/i.test(msg)) msg += ' — if you opened this as a local file, serve it over http instead (python3 -m http.server -d site).';
+        alert('Sorry, the offline download failed: ' + msg);
       }
       goBtn.disabled = false; goBtn.innerHTML = label;
     }
