@@ -434,6 +434,8 @@ body.select-mode .entry.selected { background: var(--accent-soft); }
 .ot-go .i-dl { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .ot-done { font-family: var(--font-sans); font-size: 0.82rem; color: var(--text-mute); background: none; border: none; cursor: pointer; padding: 0.3rem 0.55rem; }
 .ot-done:hover { color: var(--accent); }
+.ot-imgs, .dl-imgs { display: inline-flex; align-items: center; gap: 0.3rem; font-family: var(--font-sans); font-size: 0.8rem; color: var(--text-mute); cursor: pointer; white-space: nowrap; }
+.ot-imgs input, .dl-imgs input { accent-color: var(--accent); cursor: pointer; margin: 0; }
 
 /* "Save for offline" button on post pages */
 .save-offline { display: inline-flex; align-items: center; gap: 0.45rem; font-family: var(--font-sans); font-size: 0.9rem; font-weight: 600; color: var(--accent); background: var(--surface); border: 1.5px solid color-mix(in srgb, var(--accent) 38%, var(--border)); padding: 0.5rem 1.05rem; border-radius: 100px; cursor: pointer; transition: background .15s, color .15s, border-color .15s; }

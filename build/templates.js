@@ -102,6 +102,7 @@ ${main}
 ${siteFooter()}
 <div class="dl-bar" id="dlBar" hidden role="region" aria-label="Offline selection">
   <span class="dl-count" id="dlCount"></span>
+  <label class="dl-imgs" title="Uncheck for a much smaller file (no images, system font)"><input type="checkbox" id="dlImgs" checked> images</label>
   <span class="dl-actions">
     <button class="dl-go" id="dlGo" type="button">${I.down}<span>Download</span></button>
     <button class="dl-clear" id="dlClear" type="button">Clear</button>
@@ -287,6 +288,7 @@ export function indexMain(posts, tags, authors) {
       <button class="ot-btn" id="otAll" type="button">Select all</button>
       <button class="ot-btn" id="otNone" type="button">Select none</button>
       <span class="ot-count" id="otCount">0 selected</span>
+      <label class="ot-imgs" title="Uncheck for a much smaller file (no images, system font)"><input type="checkbox" id="otImgs" checked> Include images</label>
       <button class="ot-go" id="otGo" type="button" disabled>${I.down}<span>Download</span></button>
       <button class="ot-done" id="otDone" type="button">Done</button>
     </div>

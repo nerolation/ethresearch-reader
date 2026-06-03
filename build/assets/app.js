@@ -128,6 +128,7 @@
     var countEl = document.getElementById('dlCount');
     var goBtn = document.getElementById('dlGo');
     var clearBtn = document.getElementById('dlClear');
+    var dlImgs = document.getElementById('dlImgs');
     var otCount = document.getElementById('otCount');
     var otGo = document.getElementById('otGo');
     function has(s) { return sel.indexOf(s) !== -1; }
@@ -164,13 +165,14 @@
       if (sv) { toggle(sv.getAttribute('data-slug')); }
     });
     if (clearBtn) clearBtn.addEventListener('click', clearAll);
-    if (goBtn) goBtn.addEventListener('click', build);
+    if (goBtn) goBtn.addEventListener('click', function () { build({ images: !dlImgs || dlImgs.checked }); });
 
     function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
     function escAttr(s) { return esc(s).replace(/"/g, '&quot;'); }
 
-    async function build() {
+    async function build(opts) {
       if (!sel.length) return;
+      var withImages = !(opts && opts.images === false);
       if (location.protocol === 'file:') {
         alert('Offline download needs the site served over http(s) — browsers block reading files from a file:// page.\n\nUse the published site, or run a local server:  python3 -m http.server -d site');
         return;
@@ -181,7 +183,7 @@
       if (otGo) { var s0 = otGo.querySelector('span'); if (s0) s0.textContent = 'Preparing…'; }
       if (goBtn) goBtn.textContent = 'Preparing…';
       try {
-        var css = await fetch('offline.css').then(function (r) { return r.text(); });
+        var css = await fetch(withImages ? 'offline.css' : 'offline-lite.css').then(function (r) { return r.text(); });
         var cache = {};
         async function inlineImg(src) {
           if (cache[src]) return cache[src];
@@ -205,9 +207,19 @@
             var orig = likeEl ? likeEl.getAttribute('href') : '';
             body.querySelectorAll('.code-copy, .heading-anchor').forEach(function (e) { e.remove(); });
             var imgs = body.querySelectorAll('img');
-            for (var ii = 0; ii < imgs.length; ii++) {
-              var s = imgs[ii].getAttribute('src');
-              if (s && s.indexOf('data:') !== 0) { imgs[ii].setAttribute('src', await inlineImg(s)); imgs[ii].removeAttribute('loading'); }
+            if (withImages) {
+              for (var ii = 0; ii < imgs.length; ii++) {
+                var s = imgs[ii].getAttribute('src');
+                if (s && s.indexOf('data:') !== 0) { imgs[ii].setAttribute('src', await inlineImg(s)); imgs[ii].removeAttribute('loading'); }
+              }
+            } else {
+              for (var ij = 0; ij < imgs.length; ij++) {
+                var alt = imgs[ij].getAttribute('alt') || '';
+                var ph = document.createElement('p');
+                ph.className = 'img-omitted';
+                ph.textContent = '[image' + (alt ? ': ' + alt : '') + ']';
+                imgs[ij].replaceWith(ph);
+              }
             }
             articles.push('<article class="post"><div class="post-body"><h1 class="post-title">' + (titleEl ? titleEl.innerHTML : esc(sel[k])) + '</h1>'
               + '<p class="post-byline">' + esc(authorEl ? authorEl.textContent : '') + (timeEl ? ' · ' + esc(timeEl.textContent) : '')
@@ -221,11 +233,11 @@
           + '<title>Ethereum Research — offline (' + articles.length + ' posts)</title>'
           + '<script>try{document.documentElement.setAttribute("data-theme",(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light");}catch(e){}<\/script>'
           + '<style>' + css + '</style></head><body class="offline">'
-          + '<header class="offline-head"><h1>Ethereum Research</h1><p>Offline selection · ' + articles.length + ' posts · ' + date + '</p></header><main>'
+          + '<header class="offline-head"><h1>Ethereum Research</h1><p>Offline selection · ' + articles.length + ' posts · ' + date + (withImages ? '' : ' · text only') + '</p></header><main>'
           + articles.join('\n') + '</main></body></html>';
         var url = URL.createObjectURL(new Blob([out], { type: 'text/html' }));
         var a = document.createElement('a');
-        a.href = url; a.download = 'ethresearch-offline-' + articles.length + '-posts.html';
+        a.href = url; a.download = 'ethresearch-offline-' + articles.length + '-posts' + (withImages ? '' : '-text') + '.html';
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
       } catch (e) {
@@ -514,8 +526,9 @@
     });
     var otNone = document.getElementById('otNone');
     if (otNone) otNone.addEventListener('click', function () { OFF.clear(); });
+    var otImgs = document.getElementById('otImgs');
     var otGoBtn = document.getElementById('otGo');
-    if (otGoBtn) otGoBtn.addEventListener('click', function () { OFF.build(); });
+    if (otGoBtn) otGoBtn.addEventListener('click', function () { OFF.build({ images: !otImgs || otImgs.checked }); });
   }
 
   syncGroup(tagFilter, 'data-tag');

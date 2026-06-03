@@ -17,7 +17,7 @@ Static, read-only reader for ethresear.ch posts (top-N most-liked authors' autho
 
 ## Homepage / features
 - Index: typeahead search (title-first, full-text), author filter (top-12 + "+N more"), topic disclosure, sort, lazy-load (24/scroll).
-- Offline: select posts (entry checkboxes / per-post "Save for offline") → download bar → one self-contained `.html` (inlined CSS+fonts+images, MathML math). Selection persists in localStorage.
+- Offline: "Download for Offline Reading" enters select-mode (checkboxes + Select all/none) — or per-post "Save for offline". Builds one self-contained `.html`. "Include images" toggle: on → `offline.css` (CMU inlined) + images inlined (~full); off → `offline-lite.css` (no fonts) + images dropped (~93% smaller). Math always via MathML. Needs http(s) (fetch); blocked on file://.
 
 ## Fetch (build/fetch-posts.js)
 - Discourse public endpoints: `/directory_items.json`, `/topics/created-by/{u}.json`, `/raw/{id}/1`, `/t/{id}.json`.

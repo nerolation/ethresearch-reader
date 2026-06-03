@@ -60,16 +60,8 @@ function vendorAssets() {
 // Self-contained stylesheet for downloaded offline files: the site CSS with CMU
 // fonts inlined as data URIs, plus overrides to render math via native MathML
 // (so no KaTeX font files are needed offline).
-function buildOfflineCss() {
-  let css = fs.readFileSync(path.join(SRC_ASSETS, 'style.css'), 'utf8');
-  const cmuDir = path.join(ROOT, 'build', 'vendor', 'cmu');
-  for (const style of CMU_FONTS) {
-    const f = path.join(cmuDir, `cmu-serif-${style}.woff2`);
-    if (!fs.existsSync(f)) continue;
-    const b64 = fs.readFileSync(f).toString('base64');
-    css = css.replace(`url('fonts/cmu-serif-${style}.woff2')`, `url('data:font/woff2;base64,${b64}')`);
-  }
-  css +=
+function offlineOverrides() {
+  return (
     '\n/* --- offline overrides --- */\n' +
     '.katex .katex-html{display:none!important}\n' +
     '.katex .katex-mathml{position:static!important;clip:auto!important;-webkit-clip-path:none!important;clip-path:none!important;width:auto!important;height:auto!important;overflow:visible!important;padding:0!important}\n' +
@@ -80,8 +72,24 @@ function buildOfflineCss() {
     '.offline article.post{padding-top:2.6rem}\n' +
     '.offline article.post+article.post{border-top:1px solid var(--border);margin-top:1rem}\n' +
     '.post-byline{font-family:var(--font-sans);font-size:.85rem;color:var(--text-mute);margin:-.3rem 0 1.6rem}\n' +
-    '.post-byline a{color:var(--accent)}\n';
-  fs.writeFileSync(path.join(SITE, 'offline.css'), css);
+    '.post-byline a{color:var(--accent)}\n' +
+    '.img-omitted{display:block;margin:1.6rem auto;padding:.55rem 1rem;border:1px dashed var(--border-strong);border-radius:var(--radius-sm);color:var(--text-mute);font-family:var(--font-sans);font-size:.8rem;text-align:center;max-width:32rem}\n'
+  );
+}
+
+function buildOfflineCss() {
+  const base = fs.readFileSync(path.join(SRC_ASSETS, 'style.css'), 'utf8');
+  const cmuDir = path.join(ROOT, 'build', 'vendor', 'cmu');
+  // Full: CMU fonts inlined as data URIs (pixel-perfect, ~1MB).
+  let full = base;
+  for (const style of CMU_FONTS) {
+    const f = path.join(cmuDir, `cmu-serif-${style}.woff2`);
+    if (fs.existsSync(f)) full = full.replace(`url('fonts/cmu-serif-${style}.woff2')`, `url('data:font/woff2;base64,${fs.readFileSync(f).toString('base64')}')`);
+  }
+  fs.writeFileSync(path.join(SITE, 'offline.css'), full + offlineOverrides());
+  // Lite: drop the embedded CMU fonts → serif fallback, tiny file (for image-free downloads).
+  const lite = base.replace(/@font-face \{ font-family: 'CMU Serif';[^}]*\}\n?/g, '');
+  fs.writeFileSync(path.join(SITE, 'offline-lite.css'), lite + offlineOverrides());
 }
 
 function buildPosts() {
