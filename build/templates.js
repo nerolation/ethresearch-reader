@@ -280,6 +280,18 @@ export function indexMain(posts, tags, authors) {
 
   <p class="result-count" id="resultCount" aria-live="polite"></p>
 
+  <div class="offline-controls">
+    <button class="offline-start" id="offlineStart" type="button">${I.down}<span>Download for Offline Reading</span></button>
+    <div class="offline-toolbar" id="offlineToolbar" hidden>
+      <span class="ot-label">Select posts:</span>
+      <button class="ot-btn" id="otAll" type="button">Select all</button>
+      <button class="ot-btn" id="otNone" type="button">Select none</button>
+      <span class="ot-count" id="otCount">0 selected</span>
+      <button class="ot-go" id="otGo" type="button" disabled>${I.down}<span>Download</span></button>
+      <button class="ot-done" id="otDone" type="button">Done</button>
+    </div>
+  </div>
+
   <ol class="entry-list" id="postList">
     ${posts.map(postEntry).join('\n    ')}
   </ol>

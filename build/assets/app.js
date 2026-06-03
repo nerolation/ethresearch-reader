@@ -117,24 +117,31 @@
   }
 
   /* ---- Offline selection + single-file download (all pages) ---------- */
-  (function offline() {
+  var OFF = (function offline() {
     var KEY = 'ethr-offline-selection';
     var sel;
     try { sel = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { sel = []; }
+    var selectMode = false;
+    var isHome = !!document.getElementById('offlineStart');
     function persist() { try { localStorage.setItem(KEY, JSON.stringify(sel)); } catch (e) {} }
     var bar = document.getElementById('dlBar');
     var countEl = document.getElementById('dlCount');
     var goBtn = document.getElementById('dlGo');
     var clearBtn = document.getElementById('dlClear');
+    var otCount = document.getElementById('otCount');
+    var otGo = document.getElementById('otGo');
     function has(s) { return sel.indexOf(s) !== -1; }
     function toggle(s) {
       var i = sel.indexOf(s);
       if (i === -1) sel.push(s); else sel.splice(i, 1);
       persist(); syncAll();
     }
+    function setAll(slugs) { sel = slugs.slice(); persist(); syncAll(); }
+    function clearAll() { sel = []; persist(); syncAll(); }
+    function setMode(on) { selectMode = !!on; document.body.classList.toggle('select-mode', selectMode); syncAll(); }
     function syncAll() {
       if (bar && countEl) {
-        bar.hidden = sel.length === 0;
+        bar.hidden = sel.length === 0 || selectMode || isHome; // homepage uses the inline toolbar instead
         countEl.textContent = sel.length + (sel.length === 1 ? ' post selected' : ' posts selected');
       }
       document.querySelectorAll('.entry-check').forEach(function (b) {
@@ -147,6 +154,8 @@
         b.setAttribute('aria-pressed', on ? 'true' : 'false');
         var lbl = b.querySelector('.so-label'); if (lbl) lbl.textContent = on ? 'Saved for offline' : 'Save for offline';
       });
+      if (otCount) otCount.textContent = sel.length + ' selected';
+      if (otGo) { otGo.disabled = sel.length === 0; var sp = otGo.querySelector('span'); if (sp) sp.textContent = sel.length ? 'Download (' + sel.length + ')' : 'Download'; }
     }
     document.addEventListener('click', function (e) {
       var chk = e.target.closest && e.target.closest('.entry-check');
@@ -154,20 +163,23 @@
       var sv = e.target.closest && e.target.closest('.save-offline');
       if (sv) { toggle(sv.getAttribute('data-slug')); }
     });
-    if (clearBtn) clearBtn.addEventListener('click', function () { sel = []; persist(); syncAll(); });
-    if (goBtn) goBtn.addEventListener('click', buildDownload);
+    if (clearBtn) clearBtn.addEventListener('click', clearAll);
+    if (goBtn) goBtn.addEventListener('click', build);
 
     function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
     function escAttr(s) { return esc(s).replace(/"/g, '&quot;'); }
 
-    async function buildDownload() {
-      if (!sel.length || !goBtn) return;
+    async function build() {
+      if (!sel.length) return;
       if (location.protocol === 'file:') {
         alert('Offline download needs the site served over http(s) — browsers block reading files from a file:// page.\n\nUse the published site, or run a local server:  python3 -m http.server -d site');
         return;
       }
-      var label = goBtn.innerHTML;
-      goBtn.disabled = true; goBtn.textContent = 'Preparing…';
+      var busy = [goBtn, otGo].filter(Boolean);
+      var prev = busy.map(function (b) { return b.innerHTML; });
+      busy.forEach(function (b) { b.disabled = true; });
+      if (otGo) { var s0 = otGo.querySelector('span'); if (s0) s0.textContent = 'Preparing…'; }
+      if (goBtn) goBtn.textContent = 'Preparing…';
       try {
         var css = await fetch('offline.css').then(function (r) { return r.text(); });
         var cache = {};
@@ -221,10 +233,12 @@
         if (/fetch|load failed|networkerror/i.test(msg)) msg += ' — if you opened this as a local file, serve it over http instead (python3 -m http.server -d site).';
         alert('Sorry, the offline download failed: ' + msg);
       }
-      goBtn.disabled = false; goBtn.innerHTML = label;
+      busy.forEach(function (b, i) { b.disabled = false; b.innerHTML = prev[i]; });
+      syncAll();
     }
 
     syncAll();
+    return { has: has, toggle: toggle, setAll: setAll, clear: clearAll, sync: syncAll, setMode: setMode, build: build };
   })();
 
   /* ---- Index: search, author + tag filters, sort ---------------------- */
@@ -470,6 +484,39 @@
     var tag = (e.target && e.target.tagName) || '';
     if (e.key === '/' && !/^(INPUT|TEXTAREA|SELECT)$/.test(tag) && search) { e.preventDefault(); search.focus(); }
   });
+
+  /* ---- offline select mode (homepage) -------------------------------- */
+  function matchedSlugs() {
+    var q = (search && search.value || '').trim().toLowerCase();
+    var out = [];
+    ordered.forEach(function (card) {
+      if (!passesFilters(card)) return;
+      if (q) {
+        var rec = idxBySlug[card.getAttribute('data-slug')];
+        var hit = rec ? (rec.tl.indexOf(q) !== -1 || rec.bl.indexOf(q) !== -1) : ((card.getAttribute('data-search') || '').indexOf(q) !== -1);
+        if (!hit) return;
+      }
+      out.push(card.getAttribute('data-slug'));
+    });
+    return out;
+  }
+  var offlineStart = document.getElementById('offlineStart');
+  var offlineToolbar = document.getElementById('offlineToolbar');
+  if (offlineStart && offlineToolbar) {
+    offlineStart.addEventListener('click', function () { offlineStart.hidden = true; offlineToolbar.hidden = false; OFF.setMode(true); });
+    var otDone = document.getElementById('otDone');
+    if (otDone) otDone.addEventListener('click', function () { offlineToolbar.hidden = true; offlineStart.hidden = false; OFF.setMode(false); });
+    var otAll = document.getElementById('otAll');
+    if (otAll) otAll.addEventListener('click', function () {
+      var slugs = matchedSlugs();
+      if (slugs.length > 100 && !window.confirm('Select all ' + slugs.length + ' posts? The download will be large.')) return;
+      OFF.setAll(slugs);
+    });
+    var otNone = document.getElementById('otNone');
+    if (otNone) otNone.addEventListener('click', function () { OFF.clear(); });
+    var otGoBtn = document.getElementById('otGo');
+    if (otGoBtn) otGoBtn.addEventListener('click', function () { OFF.build(); });
+  }
 
   syncGroup(tagFilter, 'data-tag');
   syncGroup(authorFilter, 'data-author');
