@@ -49,6 +49,13 @@ function vendorAssets() {
     const from = path.join(cmuDir, name);
     if (fs.existsSync(from)) fs.copyFileSync(from, path.join(ASSETS, 'fonts', name));
   }
+  // Playfair Display — masthead title
+  const pfDir = path.join(ROOT, 'build', 'vendor', 'playfair');
+  for (const w of ['600', '700']) {
+    const name = `playfair-${w}.woff2`;
+    const from = path.join(pfDir, name);
+    if (fs.existsSync(from)) fs.copyFileSync(from, path.join(ASSETS, 'fonts', name));
+  }
   // Content images + author avatars
   copyDir(path.join(ROOT, 'images'), path.join(SITE, 'images'));
   copyDir(path.join(ROOT, 'data', 'avatars'), path.join(ASSETS, 'avatars'));

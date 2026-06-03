@@ -16,6 +16,7 @@ Static, read-only reader for ethresear.ch posts (top-N most-liked authors' autho
 - Build artifacts in `site/`: `search-index.json` (typeahead/full-text), `offline.css` (self-contained: CMU fonts inlined, math via native MathML).
 
 ## Homepage / features
+- Masthead: title in **Playfair Display** (self-hosted, `--font-display`), tagline "ethresear.ch, in LaTeX" (CSS LaTeX wordmark). Body stays Computer Modern. Header has ethresear.ch + GitHub repo links + theme toggle. **Dark theme by default on first visit** (boot script in templates.js `layout()`); saved preference wins.
 - Index: typeahead search (title-first, full-text), author filter (top-12 + "+N more"), topic disclosure, sort, lazy-load (24/scroll).
 - Offline: "Download for Offline Reading" enters select-mode (checkboxes + Select all/none) — or per-post "Save for offline". Builds one self-contained `.html`. "Include images" toggle: on → `offline.css` (CMU inlined) + images inlined (~full); off → `offline-lite.css` (no fonts) + images dropped (~93% smaller). Math always via MathML. Needs http(s) (fetch); blocked on file://.
 

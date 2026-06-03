@@ -7,10 +7,13 @@
 @font-face { font-family: 'CMU Serif'; font-style: italic; font-weight: 400; font-display: swap; src: url('fonts/cmu-serif-italic.woff2') format('woff2'); }
 @font-face { font-family: 'CMU Serif'; font-style: normal; font-weight: 700; font-display: swap; src: url('fonts/cmu-serif-bold.woff2') format('woff2'); }
 @font-face { font-family: 'CMU Serif'; font-style: italic; font-weight: 700; font-display: swap; src: url('fonts/cmu-serif-bolditalic.woff2') format('woff2'); }
+@font-face { font-family: 'Playfair Display'; font-style: normal; font-weight: 600; font-display: swap; src: url('fonts/playfair-600.woff2') format('woff2'); }
+@font-face { font-family: 'Playfair Display'; font-style: normal; font-weight: 700; font-display: swap; src: url('fonts/playfair-700.woff2') format('woff2'); }
 
 /* ---- Theme tokens ------------------------------------------------------ */
 :root {
   --font-serif: 'CMU Serif', 'Latin Modern Roman', Georgia, 'Times New Roman', serif;
+  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
   --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
 
@@ -119,7 +122,7 @@ a:hover { color: var(--accent-strong); text-decoration: underline; }
   border-bottom: 1px solid var(--border);
 }
 .header-wrap { display: flex; align-items: center; justify-content: space-between; height: 3.5rem; }
-.brand { font-weight: 700; font-size: 1.12rem; letter-spacing: -0.01em; color: var(--text); }
+.brand { font-family: var(--font-display); font-weight: 700; font-size: 1.18rem; letter-spacing: 0; color: var(--text); }
 .brand:hover { color: var(--text); text-decoration: none; }
 .brand-dim { color: var(--text-mute); font-weight: 400; }
 .site-nav { display: flex; align-items: center; gap: 0.4rem; }
@@ -129,6 +132,8 @@ a:hover { color: var(--accent-strong); text-decoration: underline; }
   padding: 0.35rem 0.6rem; border-radius: 100px;
 }
 .nav-link:hover { color: var(--text); background: var(--surface-2); text-decoration: none; }
+.nav-icon { padding: 0.4rem 0.5rem; }
+.i-gh { fill: currentColor; display: block; }
 
 .theme-toggle {
   display: inline-grid; place-items: center;
@@ -316,9 +321,13 @@ html[data-theme='dark'] .post-body img { background: #f7f7f4; padding: 2px; }
 
 .hero-archive { text-align: center; padding: 2.6rem 0 2.4rem; border-bottom: 1px solid var(--border); margin-bottom: 2.6rem; }
 .hero-eyebrow { font-family: var(--font-sans); font-size: 0.72rem; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-mute); margin: 0 0 1rem; }
-.hero-title { font-size: clamp(2.4rem, 1.7rem + 3vw, 3.7rem); line-height: 1.04; margin: 0 0 0.75rem; letter-spacing: -0.025em; font-weight: 700; }
+.hero-title { font-family: var(--font-display); font-size: clamp(2.1rem, 1.35rem + 3.4vw, 4.1rem); line-height: 1.05; margin: 0 0 0.8rem; letter-spacing: -0.005em; font-weight: 700; }
 .hero-tagline { margin: 0 auto 1.4rem; color: var(--text-soft); font-size: clamp(1.05rem, 1rem + 0.4vw, 1.28rem); font-style: italic; max-width: 33rem; line-height: 1.5; }
 .hero-tagline a { color: var(--accent); text-decoration-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+/* LaTeX wordmark */
+.latex { font-style: normal; white-space: nowrap; }
+.latex .latex-a { text-transform: uppercase; font-size: 0.7em; vertical-align: 0.27em; margin-left: -0.32em; margin-right: -0.14em; }
+.latex .latex-e { text-transform: uppercase; vertical-align: -0.22em; margin-left: -0.08em; margin-right: -0.04em; }
 .hero-stats { display: flex; gap: 0.85rem; justify-content: center; align-items: center; margin: 0; font-family: var(--font-sans); font-size: 0.76rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-mute); }
 .hero-stats .sep { width: 3px; height: 3px; border-radius: 50%; background: var(--border-strong); }
 
@@ -508,6 +517,8 @@ body.select-mode .entry.selected { background: var(--accent-soft); }
 
 /* ---- Responsive -------------------------------------------------------- */
 @media (max-width: 640px) {
+  .brand { font-size: 1.05rem; }
+  .brand-dim { display: none; } /* drop " reader" on small screens */
   .post-nav { grid-template-columns: 1fr; }
   .post-nav-item.next { text-align: left; }
   .heading-anchor { display: none; }

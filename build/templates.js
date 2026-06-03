@@ -32,6 +32,7 @@ const I = {
     '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>',
   up: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
   bookmark: '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" class="i-bm"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>',
+  github: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" class="i-gh"><path d="M12 .5C5.7.5.5 5.8.5 12.3c0 5.2 3.4 9.6 8 11.2.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.5-1.4-1.3-1.8-1.3-1.8-1.1-.7 0-.7 0-.7 1.2 0 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 4.6 18 4.9 18 4.9c.6 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6 4.6-1.6 8-6 8-11.2C23.5 5.8 18.3.5 12 .5z"/></svg>',
   down: '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" class="i-dl"><path d="M12 4v11m0 0 4-4m-4 4-4-4M5 20h14"/></svg>',
 };
 
@@ -47,6 +48,7 @@ function siteHeader(base) {
     <a class="brand" href="${base}index.html">Ethereum Research<span class="brand-dim"> reader</span></a>
     <nav class="site-nav">
       <a class="nav-link" href="https://ethresear.ch" target="_blank" rel="noopener">ethresear.ch ${I.ext}</a>
+      <a class="nav-link nav-icon" href="https://github.com/nerolation/ethresearch-reader" target="_blank" rel="noopener" aria-label="View source on GitHub" title="View source on GitHub">${I.github}</a>
       <button class="theme-toggle" type="button" aria-label="Toggle colour theme" aria-pressed="false" title="Toggle light / dark">${I.sun}${I.moon}</button>
     </nav>
   </div>
@@ -67,8 +69,8 @@ export function layout({
 }) {
   const themeBoot =
     `<script>(function(){try{var t=localStorage.getItem('theme');` +
-    `if(t!=='light'&&t!=='dark'){t=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';}` +
-    `document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>`;
+    `if(t!=='light'&&t!=='dark'){t='dark';}` + // dark by default on first visit
+    `document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>`;
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -246,7 +248,7 @@ export function indexMain(posts, tags, authors) {
   <section class="hero hero-archive">
     <p class="hero-eyebrow">A reading archive</p>
     <h1 class="hero-title">Ethereum Research</h1>
-    <p class="hero-tagline">Protocol research from <a href="https://ethresear.ch" target="_blank" rel="noopener">ethresear.ch</a>, set for quiet reading.</p>
+    <p class="hero-tagline"><a href="https://ethresear.ch" target="_blank" rel="noopener">ethresear.ch</a>, in <span class="latex">L<span class="latex-a">a</span>T<span class="latex-e">e</span>X</span></p>
     <p class="hero-stats"><span>${posts.length} posts</span><span class="sep"></span><span>${authors.length} researchers</span></p>
   </section>
 
